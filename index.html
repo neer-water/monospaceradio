@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monospace Radio</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --text-color: #a3a3a3;
+            --accent-color: #ffffff;
+            --blur-amount: 0px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: "Courier New", Courier, monospace;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+            transition: filter 0.5s ease;
+        }
+
+        header {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #262626;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            color: var(--accent-color);
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+        }
+
+        select {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid #262626;
+            padding: 5px 10px;
+            font-family: inherit;
+            cursor: pointer;
+            outline: none;
+        }
+
+        main {
+            width: 100%;
+            max-width: 800px;
+            flex-grow: 1;
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 80%;
+            background: transparent;
+            border: none;
+            color: var(--accent-color);
+            font-family: inherit;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            filter: blur(var(--blur-amount));
+            transition: filter 0.8s ease;
+        }
+
+        .status-bar {
+            position: fixed;
+            bottom: 20px;
+            max-width: 800px;
+            width: calc(100% - 80px);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #525252;
+        }
+
+        .warning-msg {
+            color: #ef4444;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>MONOSPACE RADIO // v1.0</h1>
+        <div class="controls">
+            <select id="audioStation">
+                <option value="none">?? Silence</option>
+                <option value="lofi">?? Lofi Station</option>
+                <option value="rain">??? Heavy Rain</option>
+                <option value="vinyl">?? Vinyl Crackle</option>
+            </select>
+        </div>
+    </header>
+
+    <main>
+        <textarea id="editor" placeholder="Start typing to lock your focus. Do not leave this tab..."></textarea>
+    </main>
+
+    <div class="status-bar">
+        <span id="wordCount">Words: 0</span>
+        <span id="statusMessage" class="warning-msg">Attention Drifting Detected. Return immediately.</span>
+        <span>Intentional Living Co.</span>
+    </div>
+
+    <audio id="audio-lofi" loop src="https://soundhelix.com"></audio>
+    <audio id="audio-rain" loop src="https://mixkit.co"></audio>
+    <audio id="audio-vinyl" loop src="https://mixkit.co"></audio>
+
+    <script>
+        const editor = document.getElementById("editor");
+        const wordCount = document.getElementById("wordCount");
+        const stationSelect = document.getElementById("audioStation");
+        const warningMsg = document.getElementById("statusMessage");
+
+        let activeAudio = null;
+
+        if (localStorage.getItem("monospace_draft")) {
+            editor.value = localStorage.getItem("monospace_draft");
+            updateWords();
+        }
+
+        function updateWords() {
+            const text = editor.value.trim();
+            const words = text === "" ? 0 : text.split(/\s+/).length;
+            wordCount.textContent = `Words: ${words}`;
+        }
+
+        editor.addEventListener("input", () => {
+            updateWords();
+            localStorage.setItem("monospace_draft", editor.value);
+        });
+
+        stationSelect.addEventListener("change", (e) => {
+            if (activeAudio) activeAudio.pause();
+            const selected = e.target.value;
+            if (selected !== "none") {
+                activeAudio = document.getElementById(`audio-${selected}`);
+                activeAudio.volume = 0.4;
+                activeAudio.play().catch(() => console.log("Interaction required."));
+            }
+        });
+
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                document.documentElement.style.setProperty("--blur-amount", "15px");
+                warningMsg.style.display = "block";
+                if (activeAudio) activeAudio.volume = 0.05; 
+            } else {
+                setTimeout(() => {
+                    document.documentElement.style.setProperty("--blur-amount", "0px");
+                    warningMsg.style.display = "none";
+                    if (activeAudio) activeAudio.volume = 0.4; 
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>
